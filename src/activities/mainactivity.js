@@ -5,19 +5,150 @@ import {
   View,
   Image,
   TouchableOpacity,
+  Alert,
+  FlatList
 } from "react-native";
 import { AppStyles } from "../config/styles";
 
-import { Container, Header, Content, Footer, FooterTab, Button, Icon, Text, Badge, Fab , Body, Title, Subtitle} from 'native-base';
+import { Container, Header, Content, Footer,
+   FooterTab, Button, Icon, Text, Badge, Fab ,
+    Body, Title, Subtitle,  Card, CardItem, Thumbnail, Left, Right, Toast} from 'native-base';
 
 
-import CustomLoader from '../components/loading';
+import CustomLoaderMiddle from '../components/loader2';
 import { useNavigation } from '@react-navigation/native';
+
+import { TrackTaskConnected } from "../../src/config/Internet";
+
+import firebase from '../config/fb';
 
 const HomeActivity = ({ navigation }) => {
 
   const [active, setActive] = useState(true);
    const [activeTask, setActiveTask] = useState(true);
+   const [loadSpinner, setLoadSpinner] = useState(false);
+
+   const [Task, setTask] = useState([]);
+
+
+   //get task data from firebase after 6  seconds
+       useEffect(()=>{
+        setLoadSpinner(true);
+          setTimeout(() => {
+                  //show spinner
+        setLoadSpinner(false);
+            getTask();
+            console.log(Task);
+        }, 8000);
+    }, [])
+
+  //retreieves task from the remote server (Firebase)
+   const getTask = ()=>{
+     const dbRef = firebase.collection('Task');
+     //check for internet connection
+        if(TrackTaskConnected){ 
+      dbRef.onSnapshot(data => getCollection(data))
+      }else{
+        Alert.alert(
+              "Error in Internet Connection",
+              "To create task, you must be connected to a Wi-Fi or turn on data",
+              [
+                {
+                  text: "No",
+                  onPress: () => console.log("Cancel Pressed"),
+                  style: "cancel",
+                },
+                { text: "Yes", onPress: () => null },
+              ],
+              { cancelable: false }
+            );
+        }
+   }
+
+   //a callback function to get returned data from getTask method
+   const getCollection = (querySnapshot) => {
+    const taskArr = [];
+    querySnapshot.forEach((res) => {
+      const { taskname, startdate, completetionstatus, priority, taskdescription} = res.data();
+      taskArr.push({
+        key: res.id,
+        taskname,
+        startdate,
+        completetionstatus,
+        priority,
+        taskdescription
+      });
+      //save the data to setTask state hook as an array
+      setTask(taskArr);
+   });
+  }
+
+  //for testing purpose
+//   const ff = [{
+//       taskname:"Ernest",
+//       taskdescription: "Ernest 345",
+//       taskdescription:false
+//   },
+// {
+//       taskname:"Ernest",
+//       taskdescription: "Ernest 345",
+//       taskdescription:false
+//   },
+// {
+//       taskname:"Ernest",
+//       taskdescription: "Ernest 345",
+//       taskdescription:false
+//   },
+// {
+//       taskname:"Ernest",
+//       taskdescription: "Ernest 345",
+//       taskdescription:false
+//   }];
+
+//fuunctional component to delete task from database
+ const deleteTask = (taskID)=> {
+   //check for internet before making request for deleting task
+   if(TrackTaskConnected){
+    const dbRef = firebase.collection('Task').doc(taskID)
+      dbRef.delete().then((res) => {
+        //show toast
+              Toast.show({
+                text: "Task Deleted Successfully!",
+                buttonText: "Okay",
+                duration: 3000
+              })
+          console.log('Item removed from database')
+      }) } else{
+                Alert.alert(
+              "Error in Internet Connection",
+              "To delete task, you must be connected to a Wi-Fi or turn on data",
+              [
+                {
+                  text: "Ok",
+                  onPress: () => console.log("Cancel Pressed"),
+                  style: "cancel",
+                },
+              ],
+              { cancelable: false }
+            );
+      }
+  }
+
+  const deleteTaskYes = (taskID)=>{
+        Alert.alert(
+              "Delete Task!",
+              "Are you really sure you want to delete task?",
+              [
+                {
+                  text: "No",
+                  onPress: () => null,
+                  style: "cancel",
+                },
+                { text: "Yes", onPress: () => deleteTask(taskID) },
+              ],
+              { cancelable: false }
+            );
+  }
 
 
   return (
@@ -35,14 +166,62 @@ const HomeActivity = ({ navigation }) => {
                     <Title>Track Task</Title>
                    </Body>
                  </Header>
-            
-           {activeTask?           <Button style={{ backgroundColor: '#5067FF',  marginTop:300, marginStart:30}} rounded success>
-            <Text>Sorry There is no Active Task Now</Text>
+
+                  {/** show loading spinner when fetching task data from firebase */}
+                  {loadSpinner ? <CustomLoaderMiddle />: null}
+
+
+            {/** if an array of Task is empty (i.e if nothing is fetched from firebase), display a message */}
+           {!Task.length || Task == undefined ?      <Button style={{ backgroundColor: '#5067FF',  marginTop:300, marginStart:30}} rounded success>
+            <Text>{`${loadSpinner?"Retrieving Task...":"Sorry There is no Active Task Now"}`}</Text>
           </Button>: null}
 
             {/* <CustomLoader /> */}
 
-                <Content />
+            
+
+                <Content>
+
+                        <FlatList 
+                          data={Task}
+                          renderItem={({ item, index }) =>  (                           
+                            <Card>
+                        <CardItem>
+                          <Left>
+                            <Thumbnail source={require("../../assets/loading.gif")} />
+                            <Body>
+                              <Text>Task Name</Text>
+                              <Text note>{`${item.taskname}`}</Text>
+                            </Body>
+                          </Left>
+                        </CardItem>
+                        <CardItem cardBody>
+                              <Text style={{marginStart: 80,flex: 1}} >{`${item.taskdescription}`}</Text>
+                          {/* <Image source={{uri: 'Image URL'}} style={{height: 200, width: null, flex: 1}}/> */}
+                        </CardItem>
+                        <CardItem  footer bordered>
+                          <Left>
+                            <Button success>
+                              <Icon active name="ios-document" />
+                            </Button>
+                          </Left>
+                          <Body>
+                            <Button 
+                            onPress={  () => deleteTaskYes(item.key)}
+                             danger>
+                              <Icon active  name="ios-close" />
+                            </Button>
+                          </Body>
+                          <Right>
+                            <Text style={{color: "#FF0000",flex: 1}} danger>{`${item.completetionstatus == false ?"Uncompleted":"Task Completed"}`}</Text>
+                          </Right>
+                        </CardItem>
+                      </Card>)}
+                        />
+  
+                </Content>
+
+
 
                           <Fab
                             active={active}
@@ -50,7 +229,7 @@ const HomeActivity = ({ navigation }) => {
                             containerStyle={{ }}
                             style={{ backgroundColor: '#5067FF'}}
                             position="topRight"
-                            onPress={() => setActive(true) }>
+                            onPress={() => navigation.navigate("CreateTaskActivity") }>
                             <Icon name="ios-add-circle" />
                         </Fab>
 

@@ -25,6 +25,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 const Stack = createStackNavigator();
 
 
+
+
 const App  = () => {
   const [isReady, setIsReady] = useState(false);
 
@@ -73,7 +75,16 @@ return(
           name="CreateTaskActivity"
           component={CreateTaskActivity}
           // Hiding header for Splash Screen
-          options={{headerShown: false}}
+      options={{
+          title: 'Create Task', //Set Header Title
+          headerStyle: {
+            backgroundColor: AppStyles.color.main, //Set Header color
+          },
+          headerTintColor: '#fff', //Set Header text color
+          headerTitleStyle: {
+            fontWeight: 'bold', //Set Header text style
+          },
+        }}
         />
 
         <Stack.Screen

@@ -6,6 +6,7 @@ import { AppStyles } from "../config/styles";
 // import HomeActivity from './src/activities/mainactivity';
 
 
+
 const SplashScreen = ({navigation}) => {
   //State for ActivityIndicator animation
   const [animating, setAnimating] = useState(true);
@@ -17,14 +18,14 @@ const SplashScreen = ({navigation}) => {
           setAnimating(false);
             navigation.replace("HomeActivity"
           );
-        }, 5000);
+        }, 6000);
     })
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>TrackTask</Text>
+      <Text style={styles.header}>Initializing TrackTask...</Text>
       <Image
-        source={require("../../assets/icon.png")}
+        source={require("../../assets/loading.gif")}
         style={{ width: "90%", resizeMode: "contain", margin: 30 }}
       />
 
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: AppStyles.color.deepblue,
+    backgroundColor: "#ffff",
   },
   activityIndicator: {
     alignItems: "center",
@@ -53,7 +54,7 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 20,
-    color: "#ffff",
+    color:  AppStyles.color.deepblue,
     fontWeight: "bold",
     paddingVertical: 14,
   },
