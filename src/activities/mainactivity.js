@@ -79,8 +79,15 @@ const HomeActivity = ({ navigation }) => {
         taskdescription
       });
       //save the data to setTask state hook as an array
-      setTask(taskArr);
+      setTask(filterCompletedTrackTask(taskArr));
    });
+  }
+
+
+    //filter uncompleted task
+  const filterCompletedTrackTask = (val)=>{
+    const filteredResult = val.filter((tt) => tt.completetionstatus === false);
+    return filteredResult; 
   }
 
   //for testing purpose

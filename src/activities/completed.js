@@ -143,7 +143,7 @@ const CompletedTaskActivity = ({ navigation }) => {
                             <Button
                             onPress={  () => console.log(filterCompletedTrackTask())}
                              success>
-                              <Icon active name="ios-document" />
+                              <Icon active name="ios-checkbox-outline" />
                             </Button>
                           </Left>
 
