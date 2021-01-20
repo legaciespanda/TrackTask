@@ -12,7 +12,7 @@ import { AppStyles } from "../config/styles";
 
 import { Container, Header, Content, Footer,
    FooterTab, Button, Icon, Text, Badge, Fab ,
-    Body, Title, Subtitle,  Card, CardItem, Thumbnail, Left, Right, Toast} from 'native-base';
+    Body, Title, Subtitle,  Card, CardItem, Thumbnail, Left, Right, Toast, Textarea} from 'native-base';
 
 
 import CustomLoaderMiddle from '../components/loader2';
@@ -188,7 +188,7 @@ const HomeActivity = ({ navigation }) => {
                             <Card>
                         <CardItem>
                           <Left>
-                            <Thumbnail source={require("../../assets/loading.gif")} />
+                            <Thumbnail source={require("../../assets/icon.png")} />
                             <Body>
                               <Text>Task Name</Text>
                               <Text note>{`${item.taskname}`}</Text>
@@ -213,7 +213,9 @@ const HomeActivity = ({ navigation }) => {
                             </Button>
                           </Body>
                           <Right>
-                            <Text style={{color: "#FF0000",flex: 1}} danger>{`${item.completetionstatus == false ?"Uncompleted":"Task Completed"}`}</Text>
+                          {/** change completion status text color based on  */}
+                          {item.completetionstatus == false ? <Text style={{color: "#FF0000",flex: 1}} danger>UnCompleted</Text>: <Text style={{color: "#00FF00",flex: 1}}>Completed</Text>}
+                            
                           </Right>
                         </CardItem>
                       </Card>)}
