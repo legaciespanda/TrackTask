@@ -1,15 +1,21 @@
 {
   "expo": {
-    "name": "NubiavilleTask",
-    "slug": "NubiavilleTask",
+    "name": "Track-Task",
+    "slug": "Track-Task",
+    "privacy": "public",
     "version": "1.0.0",
     "orientation": "portrait",
+    "description": "A Task Management Mobile Application",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -21,13 +27,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/splash.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.nubiaville.tracktask"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/splash.png"
     }
   }
 }
