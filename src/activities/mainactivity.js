@@ -197,8 +197,7 @@ const HomeActivity = ({ navigation }) => {
                           <Left>
                             <Thumbnail source={require("../../assets/icon.png")} />
                             <Body>
-                              <Text>Task Name</Text>
-                              <Text note>{`${item.taskname}`}</Text>
+                              <Text>{`${item.taskname}`}</Text>
                             </Body>
                           </Left>
                         </CardItem>
@@ -208,7 +207,10 @@ const HomeActivity = ({ navigation }) => {
                         </CardItem>
                         <CardItem  footer bordered>
                           <Left>
-                            <Button success>
+                            <Button
+                            onPress={  () => navigation.navigate('EditTaskActivity', {trackkey: item.key})}
+                            
+                             success>
                               <Icon active name="ios-document" />
                             </Button>
                           </Left>

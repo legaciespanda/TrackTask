@@ -90,6 +90,52 @@ const CompletedTaskActivity = ({ navigation }) => {
     return filteredResult; 
   }
 
+
+  //fuunctional component to delete task from database
+ const deleteTask = (taskID)=> {
+   //check for internet before making request for deleting task
+   if(TrackTaskConnected){
+    const dbRef = firebase.collection('Task').doc(taskID)
+      dbRef.delete().then((res) => {
+        //show toast
+              Toast.show({
+                text: "Task Deleted Successfully!",
+                buttonText: "Okay",
+                duration: 3000
+              })
+          console.log('Item removed from database')
+      }) } else{
+                Alert.alert(
+              "Error in Internet Connection",
+              "To delete task, you must be connected to a Wi-Fi or turn on data",
+              [
+                {
+                  text: "Ok",
+                  onPress: () => console.log("Cancel Pressed"),
+                  style: "cancel",
+                },
+              ],
+              { cancelable: false }
+            );
+      }
+  }
+
+  const deleteTaskYes = (taskID)=>{
+        Alert.alert(
+              "Delete Task!",
+              "Are you really sure you want to delete task?",
+              [
+                {
+                  text: "No",
+                  onPress: () => null,
+                  style: "cancel",
+                },
+                { text: "Yes", onPress: () => deleteTask(taskID) },
+              ],
+              { cancelable: false }
+            );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       {/* Banner */}
@@ -141,15 +187,15 @@ const CompletedTaskActivity = ({ navigation }) => {
                         <CardItem  footer bordered>
                           <Left>
                             <Button
-                            onPress={  () => console.log(filterCompletedTrackTask())}
-                             success>
-                              <Icon active name="ios-checkbox-outline" />
+                            onPress={  () => deleteTaskYes(item.key)}
+                             danger>
+                              <Icon active name="ios-close" />
                             </Button>
                           </Left>
 
                           <Body>
                           {/** change completion status text color based on  */}
-                          {item.completetionstatus == false ? <Text style={{color: "#FF0000",flex: 1}} danger>UnCompleted</Text>: <Text style={{color: "#00FF00",flex: 1}}>Completed</Text>}
+                          {item.completetionstatus == false ? <Text style={{color: "#FF0000",flex: 1}} danger>UnCompleted</Text>: <Text style={{color: "#00FF00",flex: 1}}>Task Completed</Text>}
                           
                           </Body>
                         </CardItem>

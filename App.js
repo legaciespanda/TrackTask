@@ -15,6 +15,7 @@ import HomeActivity from './src/activities/mainactivity';
 import SettingsActivity from './src/activities/settings';
 import CreateTaskActivity from './src/activities/createtask';
 import CompletedTaskActivity from './src/activities/completed';
+import EditTaskActivity from './src/activities/edittask';
 
 
 
@@ -86,6 +87,24 @@ return(
           },
         }}
         />
+
+      <Stack.Screen
+          name="EditTaskActivity"
+          component={EditTaskActivity}
+          // Hiding header for Splash Screen
+      options={{
+          title: 'Edit Task', //Set Header Title
+          headerStyle: {
+            backgroundColor: AppStyles.color.main, //Set Header color
+          },
+          headerTintColor: '#fff', //Set Header text color
+          headerTitleStyle: {
+            fontWeight: 'bold', //Set Header text style
+          },
+        }}
+        />
+
+        
 
         <Stack.Screen
           name="CompletedTaskActivity"
