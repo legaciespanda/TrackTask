@@ -93,7 +93,7 @@ const SettingsActivity = ({ navigation }) => {
               </Left>
               <Body>
                 <Text>About</Text>
-                <Subtitle style={styles.subtitle}>Learn more about the TrackTrace App </Subtitle>
+                <Subtitle style={styles.subtitle}>Learn more about the Track-Task App </Subtitle>
               </Body>
             </ListItem>
 
@@ -101,11 +101,11 @@ const SettingsActivity = ({ navigation }) => {
              onPress={() => {
               if (Platform.OS === "android") {
                 Linking.openURL(
-                  "https://play.google.com/store/apps/details?id=nic.goi.aarogyasetu&hl=en"
+                  "https://play.google.com/store/apps/details?id=com.nubiaville.tracktask&hl=en"
                 );
               } else if (Platform.OS === "ios") {
                 Linking.openURL(
-                  "https://play.google.com/store/apps/details?id=nic.goi.aarogyasetu&hl=en"
+                  "https://play.google.com/store/apps/details?id=com.nubiaville.tracktask&hl=en"
                 );
               }
             }}
@@ -195,7 +195,19 @@ const SettingsActivity = ({ navigation }) => {
                 </Button>
               </Left>
               <Body>
-                <Text>Download Update</Text>
+                <Text 
+                onPress={() => {
+              if (Platform.OS === "android") {
+                Linking.openURL(
+                  "https://play.google.com/store/apps/details?id=com.nubiaville.tracktask&hl=en"
+                );
+              } else if (Platform.OS === "ios") {
+                Linking.openURL(
+                  "https://play.google.com/store/apps/details?id=com.nubiaville.tracktask&hl=en"
+                );
+              }
+            }}
+            >Download Update</Text>
                 <Subtitle style={styles.subtitle}>Check for updates </Subtitle>
 
               </Body>
@@ -208,7 +220,18 @@ const SettingsActivity = ({ navigation }) => {
                 </Button>
               </Left>
               <Body>
-                <Text>Privacy Policy</Text>
+                <Text 
+                onPress={() => {
+              if (Platform.OS === "android") {
+                Linking.openURL(
+                  "http://www.nubiaville.com"
+                );
+              } else if (Platform.OS === "ios") {
+                Linking.openURL(
+                  "http://www.nubiaville.com/"
+                );
+              }
+            }}>Privacy Policy</Text>
                 <Subtitle style={styles.subtitle}>Please read our Privacy Policy </Subtitle>
 
               </Body>
