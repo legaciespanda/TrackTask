@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { AppStyles } from "../config/styles";
 
-import firebase from '../config/fb';
 
 import CustomLoader from '../components/loading';
 import { TrackTaskConnected } from "../../src/config/Internet";
@@ -28,28 +27,18 @@ import { Container, Header, Content, Footer,
 
    import SelectInput from 'react-native-select-input-ios';
 
+   import { task, edittask } from "../api/endpoints";
+
 
 
 const EditTaskActivity = (props) => {
 
-  const [active, setActive] = useState(true);
-
-  const [date, setDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
-  const [mode, setMode] = useState('date');
-  const [show, setShow] = useState(false);
   const [priority, setPriority] = useState("");
-  const [description, setdescription] = useState("");
-   const [taskname, setTaskName] = useState("");
-  const [isEnabled, setIsEnabled] = useState(false);
+
 
   const [loadSpinner, setLoadSpinner] = useState(false);
   const [Task, setTask] = useState([]);
 
-  const toggleSwitch = () => { 
-    setIsEnabled(previousState => !previousState)
-  
-  };
 
 
      //get task data from firebase after 6  seconds
@@ -58,54 +47,67 @@ const EditTaskActivity = (props) => {
           setTimeout(() => {
                   //show spinner
         setLoadSpinner(false);
-            getTask();
+           getTask();
             console.log(Task);
         }, 8000);
     }, [])
-
-
-  //when the value of date changes, it's been saved the state hook
-    const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate;
-    setShow(Platform.OS === 'ios');
-    setDate(currentDate);
-  };
 
   //saves the value of task priority to state hook
     const onPriorityValueChange = (value) =>{
         setPriority(value);
   }
 
-  const onEndChange = (event, selectedDate) => {
-    const currentDate = selectedDate;
-    setShow(Platform.OS === 'ios');
-    setEndDate(currentDate);
-  };
-
-  //set the date mode to ''date'' - meaning it will show only date both IOS AND ANDROID
-    const showMode = (currentMode) => {
-      setShow(true);
-      setMode(currentMode);
-    };
-
-    const showDatepicker = () => {
-      showMode('date');
-    };
 
     //priority configurations for task
      const options =  [
-      {value: 'Low', label: 'Low'},
-      {value: 'Medium', label: 'Medium'},
-      {value: 'High', label: 'High'},
+      {value: 'todo', label: 'Todo'},
+      {value: 'in progress', label: 'In Progress'},
+      {value: 'review', label: 'Review'},
+      {value: 'done', label: 'Done'},
     ];
 
 
-  //retreieves task from the remote server (Firebase)
+
+  //retreieves task from the backend server (Track Task Admin)
    const getTask = ()=>{
-     const dbRef = firebase.collection('Task');
      //check for internet connection
         if(TrackTaskConnected){ 
-      dbRef.onSnapshot(data => getCollection(data))
+        const config = {
+                method: "GET",
+                //headers: {"Content-type": "application/json; charset=UTF-8"}
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type':'application/json'
+                }
+            }
+            fetch(task, config)
+            .then((response) => response.json())
+            .then((responseJson) => {
+              //save destructured data in array
+              const taskArr = [];
+                //get each json obbject
+                responseJson.data.forEach((res) => {
+                  //destructure the data
+                    const { id, status, title, description, due_date, start_date, date_created} = res;
+                    taskArr.push({
+                      key: id,
+                      //val: responseJson.data
+                      status,
+                      title,
+                      description,
+                      due_date,
+                      start_date,
+                      date_created
+                    });
+                });
+              //save to state
+              setTask(filterTask(taskArr));
+              //setTask(responseJson.data);
+                console.log("Data in State",Task);
+            })
+            .catch((error) => {
+                console.error(error.message);
+            });
       }else{
         Alert.alert(
               "Error in Internet Connection",
@@ -123,83 +125,46 @@ const EditTaskActivity = (props) => {
         }
    }
 
-   //a callback function to get returned data from getTask method
-   const getCollection = (querySnapshot) => {
-    const taskArr = [];
-    querySnapshot.forEach((res) => {
-      const { taskname, startdate, completetionstatus, priority, taskdescription} = res.data();
-      taskArr.push({
-        key: res.id,
-        taskname,
-        startdate,
-        completetionstatus,
-        priority,
-        taskdescription
-      });
-      //filter updat task daa based on the ID(trackkey) passed during navigation
-      const filteredResult = taskArr.filter((tt) => tt.key === props.route.params.trackkey);
-      //save the data to setTask state hook as an array
-      setTask(filteredResult);
-   });
+     //filter task based on the currently logged in user
+  const filterTask = (val)=>{
+    const filteredResult = val.filter((tt) => tt.key == props.route.params.trackkey);
+    return filteredResult; 
   }
 
-
-    //filter updat task daa based on the ID(trackkey) passed during navigation
-//   const filterUpdateTaskData = (val)=>{
-//     const filteredResult = val.filter((tt) => tt.key == (props.route.params.trackkey));
-//     return filteredResult; 
-//   }
-
-
-
+   
 //function for saving edited task
     const updateTask = ()=>{
-      const dbRef = firebase.collection('Task').doc(props.route.params.trackkey);
-    //   console.log(props.route.params.trackkey);
-      //const fdb = firebase.firestore();
-      //fdb.enablePersistence({ synchorizeTabs: true });
-      //check for internet connectivity
+        let _data = {
+            status: priority,
+        }
+        
+        const config = {
+                method: "PUT",
+                body: JSON.stringify(_data),
+                //headers: {"Content-type": "application/json; charset=UTF-8"}
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type':'application/json'
+                }
+            }
 
-      if(TrackTaskConnected){
-        //show spinner
-        setLoadSpinner(true);
-          //save data to firebase
-              dbRef.set({
-                  taskname: taskname,
-                  startdate: date,
-                  completetionstatus: isEnabled,
-                  priority: priority,
-                  taskdescription: description
-
-                }).then((res) => {
-                  //when added successfully clear the state
-                    setTaskName(""),
-                    setDate(""),
-                    setIsEnabled(false),
-                    setPriority(""),
-                    setdescription("")
-                  //navigate to home activity
-                  props.navigation.navigate('HomeActivity')
-                })
-                .catch((err) => {
-                  console.error("Error found: ", err);
-                  Alert.alert("Error found: ", err);
-                });
-      }else{
-          Alert.alert(
-              "Error in Internet Connection",
-              "To create task, you must be connected to a Wi-Fi or turn on data",
-              [
-                {
-                  text: "No",
-                  onPress: () => console.log("Cancel Pressed"),
-                  style: "cancel",
-                },
-                { text: "Yes", onPress: () => null },
-              ],
-              { cancelable: false }
-            );
-      }
+        //check for internet access
+        if(TrackTaskConnected){
+            setTimeout(() => {   
+              //e.g http://tracktask.megtrix.com/api/v1/task/edittask/1/
+            fetch(edittask+props.route.params.trackkey+"/", config)
+            .then((response) => response.json())
+            .then((responseJson) => {
+                alert("Task Successfully Updated!")
+                props.navigation.replace("HomeActivity");
+                console.log(responseJson);
+            })
+            .catch((error) => {
+              alert("Error!", error)
+                console.error(error);
+            });
+            },3000);
+        }
 
     }
 
@@ -219,79 +184,42 @@ const EditTaskActivity = (props) => {
               
                 <Card>
                   <CardItem header>
-                    <Text>Please fill the form to create a news task</Text>
+                    <Text>If you've completed this task, set the Task Status to 'Done' and update</Text>
                   </CardItem>
                   <CardItem>
                     <Body>
                     <Text>Task Name: </Text>
                       <Item regular>
                         <Input 
-                          onChangeText={text => setTaskName(text)}
-                            autoCorrect={false}
-                          value={item.taskname}
+                        disabled = {true}
+                          value={item.title}
                         />
                       </Item>
 
 
-                      {/* <Picker
-                        selectedValue={priority}
-                        style={{height: 50, width: 100}}
-                        onValueChange={(itemValue, itemIndex) =>
-                          setPriority(itemIndex)
-                        }>
-                        <Picker.Item label="Java" value="java" />
-                        <Picker.Item label="JavaScript" value="js" />
-                      </Picker> */}
 
+                       <Text style={{ flex: 1 , marginTop:15}} >Start Date</Text>
+                       <Item regular>
+                        <Text> {`${item.start_date}`}</Text>
+                       </Item>
+                        
 
+                       <Text style={{ flex: 1, marginTop:15 }} >Date Created</Text>
+                       <Item regular>
+                          <Text> {`${item.date_created}`}</Text>
+                       </Item>
+                        
 
+                        <Text style={{ flex: 1 , marginTop:15}} >Due Date</Text>
+                        <Item regular>
+                          <Text> {`${item.due_date}`}</Text>
+                        </Item>
 
-                       <Text style={{ flex: 1 }} >Start Date</Text>
-                        <Text> {`${date}`}</Text>
-                       <Button block style={{ flex: 1, padding:18,marginTop:20 }} 
-                       onPress={showDatepicker}>
-                         <Text>Select date </Text>
-                         
-                       </Button>
-
-                      {/* <Button block style={{ flex: 1, padding:18,marginTop:20 }} onPress={showDatepicker}>
-                         <Text>End Date</Text>
-                       </Button> */}
-
-
-                        {show && (
-                          <DateTimePicker
-                            testID="dateTimePicker"
-                            value={new Date()}
-                            mode={mode}
-                            is24Hour={true}
-                            display="default"
-                            onChange={onChange}
-                          />
-                        )}
-
-                        {/* {show && (
-                          <DateTimePicker
-                            testID="dateTimePicker"
-                            value={new Date()}
-                            mode={mode}
-                            is24Hour={true}
-                            display="default"
-                            onChange={onEndChange}
-                          />
-                        )} */}
-                        <Text style={{ flex: 1, marginTop:18 }}>Completeion Status </Text>
-                            <Switch
-                            trackColor={{ false: "#767577", true: "#81b0ff" }}
-                            thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
-                            ios_backgroundColor="#3e3e3e"
-                            onValueChange={toggleSwitch}
-                            value={item.completetionstatus}/>
                     </Body>
                     
                   </CardItem>
                   
-                  <Text style={{ flex: 1, padding:18 }}>Task Priority:</Text>
+                  <Text style={{ flex: 1, padding:18 }}>Task Status:</Text>
                       <SelectInput style={{ flex: 1, padding:18,marginTop:-40 }}
                       onCancelEditing={() => console.log('onCancel')}
                       onSubmitEditing={onPriorityValueChange}
@@ -304,8 +232,8 @@ const EditTaskActivity = (props) => {
                             <Textarea 
                             rowSpan={5} 
                             bordered 
-                           onChangeText={text => setdescription(text)}
-                           value={item.taskname}
+                            disabled = {true}
+                           value={item.description}
                              />
                           </Form>
 

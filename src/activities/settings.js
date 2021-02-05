@@ -19,12 +19,69 @@ import {
 import Communications from "react-native-communications";
 // import { useNavigation } from '@react-navigation/native';
 // import VersionCheck from 'react-native-version-check';
-
+import { logout } from "../api/endpoints";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SettingsActivity = ({ navigation }) => {
 
   const [active, setActive] = useState(true);
 
+  
+         const _logout = () => {
+        
+        const config = {
+                method: "POST",
+                //headers: {"Content-type": "application/json; charset=UTF-8"}
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type':'application/json'
+                }
+            }
+
+        //check for internet access
+        if(TrackTaskConnected){
+          clearUserID();
+            setTimeout(() => {   
+            fetch(logout, config)
+            .then((response) => response.text())
+            .then((responseJson) => {
+                console.log(responseJson);
+                //clear user ID from async storage
+                navigation.replace("LoginActivity");
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+            },3000);
+        }
+    }
+
+       const _logoutPrompt = () =>{
+              Alert.alert(
+              "Log Out!",
+              "Are you sure you really want to log out from Track Task?",
+              [
+                {
+                  text: "No",
+                  onPress: () => null,
+                  style: "cancel",
+                },
+                { text: "Yes", onPress: () => _logout() },
+              ],
+              { cancelable: false }
+            );
+    }
+
+    //clear user ID after log out
+      const clearUserID = async () => {
+        await AsyncStorage.clear().
+        then( (val)=>{
+        console.log("loged out successfully", val);
+        } )
+        .catch( ()=>{
+        console.log("There was an error logging ou");
+        } )
+    }
 
   const shareWithFriends = () => {
     const inputValue =
@@ -243,15 +300,19 @@ const SettingsActivity = ({ navigation }) => {
 
           <Footer>
             <FooterTab>
-              <Button onPress={() => navigation.navigate("HomeActivity")} active vertical>
+              <Button onPress={() => navigation.replace("HomeActivity")} active vertical>
                 <Icon name="ios-add-circle" />
-                <Text>Active Tasks</Text>
+                <Text>Tasks</Text>
               </Button>
-              <Button onPress={() => navigation.navigate("CompletedTaskActivity")} vertical>
+              <Button onPress={() => navigation.replace("CompletedTaskActivity")} vertical>
                 <Icon name="ios-checkbox" />
-                <Text>Completed</Text>
+                <Text>Complete</Text>
               </Button>
-              <Button onPress={() => navigation.navigate("SettingsActivity")} vertical>
+              <Button onPress={() => _logoutPrompt() } vertical>
+                    <Icon name="ios-power" />
+                    <Text>Log Out</Text>
+              </Button>
+              <Button onPress={() => navigation.replace("SettingsActivity")} vertical>
                 <Icon name="ios-settings" />
                 <Text>Setings</Text>
               </Button>

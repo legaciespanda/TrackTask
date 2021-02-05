@@ -3,7 +3,7 @@
     "name": "Track-Task",
     "slug": "Track-Task",
     "privacy": "public",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "description": "A Task Management Mobile Application",
     "icon": "./assets/icon.png",

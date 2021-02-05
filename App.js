@@ -13,7 +13,7 @@ import { AppStyles } from "./src/config/styles";
 import SplashScreen from './src/activities/splashactivity';
 import HomeActivity from './src/activities/mainactivity';
 import SettingsActivity from './src/activities/settings';
-import CreateTaskActivity from './src/activities/createtask';
+import LoginActivity from './src/activities/Login';
 import CompletedTaskActivity from './src/activities/completed';
 import EditTaskActivity from './src/activities/edittask';
 
@@ -73,19 +73,10 @@ return(
         />
 
           <Stack.Screen
-          name="CreateTaskActivity"
-          component={CreateTaskActivity}
+          name="LoginActivity"
+          component={LoginActivity}
           // Hiding header for Splash Screen
-      options={{
-          title: 'Create Task', //Set Header Title
-          headerStyle: {
-            backgroundColor: AppStyles.color.main, //Set Header color
-          },
-          headerTintColor: '#fff', //Set Header text color
-          headerTitleStyle: {
-            fontWeight: 'bold', //Set Header text style
-          },
-        }}
+          options={{headerShown: false}}
         />
 
       <Stack.Screen

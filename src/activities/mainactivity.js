@@ -11,22 +11,25 @@ import {
 import { AppStyles } from "../config/styles";
 
 import { Container, Header, Content, Footer,
-   FooterTab, Button, Icon, Text, Badge, Fab ,
+   FooterTab, Button, Icon, Text,
     Body, Title, Subtitle,  Card, CardItem, Thumbnail, Left, Right, Toast, Textarea} from 'native-base';
 
 
 import CustomLoaderMiddle from '../components/loader2';
-import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { TrackTaskConnected } from "../../src/config/Internet";
 
-import firebase from '../config/fb';
+import { task, logout } from "../api/endpoints";
 
 const HomeActivity = ({ navigation }) => {
 
   const [active, setActive] = useState(true);
    const [activeTask, setActiveTask] = useState(true);
    const [loadSpinner, setLoadSpinner] = useState(false);
+const [userIdentity, setuserIdentity] = useState(0);
+const [userName, setUserName] = useState("");
+
 
    const [Task, setTask] = useState([]);
 
@@ -38,16 +41,50 @@ const HomeActivity = ({ navigation }) => {
                   //show spinner
         setLoadSpinner(false);
             getTask();
+            getName();
+            getUserID()
             console.log(Task);
         }, 8000);
     }, [])
 
-  //retreieves task from the remote server (Firebase)
+  //retreieves task from the backend server (Track Task Admin)
    const getTask = ()=>{
-     const dbRef = firebase.collection('Task');
      //check for internet connection
         if(TrackTaskConnected){ 
-      dbRef.onSnapshot(data => getCollection(data))
+        const config = {
+                method: "GET",
+                //headers: {"Content-type": "application/json; charset=UTF-8"}
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type':'application/json'
+                }
+            }
+            fetch(task, config)
+            .then((response) => response.json())
+            .then((responseJson) => {
+              //save destructured data in array
+              const taskArr = [];
+                //get each json obbject
+                responseJson.data.forEach((res) => {
+                  //destructure the data
+                    const { id, status, title, description, user_id} = res;
+                    taskArr.push({
+                      key: id,
+                      //val: responseJson.data
+                      status,
+                      title,
+                      description,
+                      user_id
+                    });
+                });
+              //save to state
+              setTask(filterTask(taskArr));
+              //setTask(responseJson.data);
+                console.log("Data in State",Task);
+            })
+            .catch((error) => {
+                console.error(error.message);
+            });
       }else{
         Alert.alert(
               "Error in Internet Connection",
@@ -65,99 +102,93 @@ const HomeActivity = ({ navigation }) => {
         }
    }
 
-   //a callback function to get returned data from getTask method
-   const getCollection = (querySnapshot) => {
-    const taskArr = [];
-    querySnapshot.forEach((res) => {
-      const { taskname, startdate, completetionstatus, priority, taskdescription} = res.data();
-      taskArr.push({
-        key: res.id,
-        taskname,
-        startdate,
-        completetionstatus,
-        priority,
-        taskdescription
-      });
-      //save the data to setTask state hook as an array
-      setTask(filterCompletedTrackTask(taskArr));
-   });
-  }
 
+      const _logout = () => {
+        
+        const config = {
+                method: "POST",
+                //headers: {"Content-type": "application/json; charset=UTF-8"}
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type':'application/json'
+                }
+            }
 
-    //filter uncompleted task
-  const filterCompletedTrackTask = (val)=>{
-    const filteredResult = val.filter((tt) => tt.completetionstatus === false);
-    return filteredResult; 
-  }
+        //check for internet access
+        if(TrackTaskConnected){
+          clearUserID();
+            setTimeout(() => {   
+            fetch(logout, config)
+            .then((response) => response.text())
+            .then((responseJson) => {
+                console.log(responseJson);
+                //clear user ID from async storage
+                navigation.replace("LoginActivity");
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+            },3000);
+        }
+    }
 
-  //for testing purpose
-//   const ff = [{
-//       taskname:"Ernest",
-//       taskdescription: "Ernest 345",
-//       taskdescription:false
-//   },
-// {
-//       taskname:"Ernest",
-//       taskdescription: "Ernest 345",
-//       taskdescription:false
-//   },
-// {
-//       taskname:"Ernest",
-//       taskdescription: "Ernest 345",
-//       taskdescription:false
-//   },
-// {
-//       taskname:"Ernest",
-//       taskdescription: "Ernest 345",
-//       taskdescription:false
-//   }];
-
-//fuunctional component to delete task from database
- const deleteTask = (taskID)=> {
-   //check for internet before making request for deleting task
-   if(TrackTaskConnected){
-    const dbRef = firebase.collection('Task').doc(taskID)
-      dbRef.delete().then((res) => {
-        //show toast
-              Toast.show({
-                text: "Task Deleted Successfully!",
-                buttonText: "Okay",
-                duration: 3000
-              })
-          console.log('Item removed from database')
-      }) } else{
-                Alert.alert(
-              "Error in Internet Connection",
-              "To delete task, you must be connected to a Wi-Fi or turn on data",
-              [
-                {
-                  text: "Ok",
-                  onPress: () => console.log("Cancel Pressed"),
-                  style: "cancel",
-                },
-              ],
-              { cancelable: false }
-            );
-      }
-  }
-
-  const deleteTaskYes = (taskID)=>{
-        Alert.alert(
-              "Delete Task!",
-              "Are you really sure you want to delete task?",
+    const _logoutPrompt = () =>{
+              Alert.alert(
+              "Log Out!",
+              "Are you sure you really want to log out from Track Task?",
               [
                 {
                   text: "No",
                   onPress: () => null,
                   style: "cancel",
                 },
-                { text: "Yes", onPress: () => deleteTask(taskID) },
+                { text: "Yes", onPress: () => _logout() },
               ],
               { cancelable: false }
             );
+    }
+
+    //clear user ID after log out
+
+      const clearUserID = async () => {
+        await AsyncStorage.clear().
+        then( (val)=>{
+        console.log("loged out successfully", val);
+        } )
+        .catch( ()=>{
+        console.log("There was an error logging ou");
+        } )
+    }
+
+//get user ID/identity and save to async storage
+    const getUserID = async () => {
+        await AsyncStorage.getItem('@user_id')
+        .then( (val)=>{
+          setuserIdentity(val);
+        console.log("user Id gooten now", val);
+        } )
+        .catch( ()=>{
+        console.log("There was an error geting the ID");
+        } )
+    }
+
+    //get user name and save to async storage
+    const getName = async () => {
+        await AsyncStorage.getItem('@user_name')
+        .then( (val)=>{
+          setUserName(val);
+        console.log("user Id gooten now", val);
+        } )
+        .catch( ()=>{
+        console.log("There was an error geting the ID");
+        } )
+    }
+
+  //filter task based on the currently logged in user and only uncompleted task
+  const filterTask = (val)=>{
+    const filteredResult = val.filter((tt) => tt.user_id == userIdentity && (tt.status == "todo" || tt.status == "in progress" || tt.status == "review" ));
+    return filteredResult; 
   }
-
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       {/* Banner */}
@@ -170,7 +201,7 @@ const HomeActivity = ({ navigation }) => {
             <Container>
                 <Header>
                    <Body>
-                    <Title>Track Task</Title>
+                    <Title>Track Task - {`${"Welcome "+ userName}`}</Title>
                    </Body>
                  </Header>
 
@@ -179,8 +210,8 @@ const HomeActivity = ({ navigation }) => {
 
 
             {/** if an array of Task is empty (i.e if nothing is fetched from firebase), display a message */}
-           {!Task.length || Task == undefined ?      <Button style={{ backgroundColor: '#5067FF',  marginTop:300, marginStart:30}} rounded success>
-            <Text>{`${loadSpinner?"Retrieving Task...":"Sorry There is no Active Task Now"}`}</Text>
+           {!Task.length || Task == undefined ?      <Button style={{ backgroundColor: '#5067FF',  marginTop:300, marginStart:40}} rounded success>
+            <Text>{`${loadSpinner?"Retrieving Your Task...":"Sorry There Is No Task For You"}`}</Text>
           </Button>: null}
 
             {/* <CustomLoader /> */}
@@ -197,33 +228,28 @@ const HomeActivity = ({ navigation }) => {
                           <Left>
                             <Thumbnail source={require("../../assets/icon.png")} />
                             <Body>
-                              <Text>{`${item.taskname}`}</Text>
+                              <Text>{`${item.title}`}</Text>
                             </Body>
                           </Left>
                         </CardItem>
                         <CardItem cardBody>
-                              <Text style={{marginStart: 80,flex: 1}} >{`${item.taskdescription}`}</Text>
+                              <Text style={{marginStart: 80,flex: 1}} >{`${item.description}`}</Text>
                           {/* <Image source={{uri: 'Image URL'}} style={{height: 200, width: null, flex: 1}}/> */}
                         </CardItem>
                         <CardItem  footer bordered>
                           <Left>
                             <Button
                             onPress={  () => navigation.navigate('EditTaskActivity', {trackkey: item.key})}
-                            
                              success>
-                              <Icon active name="ios-document" />
+                              <Icon active name="ios-open" />
                             </Button>
                           </Left>
                           <Body>
-                            <Button 
-                            onPress={  () => deleteTaskYes(item.key)}
-                             danger>
-                              <Icon active  name="ios-close" />
-                            </Button>
+
                           </Body>
                           <Right>
                           {/** change completion status text color based on  */}
-                          {item.completetionstatus == false ? <Text style={{color: "#FF0000",flex: 1}} danger>UnCompleted</Text>: <Text style={{color: "#00FF00",flex: 1}}>Completed</Text>}
+                          {item.status === "todo" || item.status === "in review"  || item.status === "progress"  ? <Text style={{color: "#FF0000",flex: 1}} danger>UnCompleted</Text>: <Text style={{color: "#00FF00",flex: 1}}>Completed</Text>}
                             
                           </Right>
                         </CardItem>
@@ -233,28 +259,21 @@ const HomeActivity = ({ navigation }) => {
                 </Content>
 
 
-
-                          <Fab
-                            active={active}
-                            direction="up"
-                            containerStyle={{ }}
-                            style={{ backgroundColor: '#5067FF'}}
-                            position="topRight"
-                            onPress={() => navigation.navigate("CreateTaskActivity") }>
-                            <Icon name="ios-add-circle" />
-                        </Fab>
-
                 <Footer>
                 <FooterTab>
-                    <Button onPress={() => navigation.navigate("HomeActivity") } active vertical>
+                    <Button onPress={() => navigation.replace("HomeActivity") } active vertical>
                     <Icon name="ios-add-circle" />
-                    <Text>Active Tasks</Text>
+                    <Text>Tasks</Text>
                     </Button>
-                    <Button onPress={() => navigation.navigate("CompletedTaskActivity") } vertical>
+                    <Button onPress={() => navigation.replace("CompletedTaskActivity") } vertical>
                     <Icon name="ios-checkbox" />
-                    <Text>Completed</Text>
+                    <Text>Complete</Text>
                     </Button>
-                    <Button onPress={() => navigation.navigate("SettingsActivity") } vertical>
+                    <Button onPress={() => _logoutPrompt() } vertical>
+                    <Icon name="ios-power" />
+                    <Text>Log Out</Text>
+                    </Button>
+                    <Button onPress={() => navigation.replace("SettingsActivity") } vertical>
                     <Icon name="ios-settings" />
                     <Text>Setings</Text>
                     </Button>
